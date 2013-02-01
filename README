@@ -1,0 +1,74 @@
+fwding v0.1 Alpha
+Written by Foeh Mannay, January 2013
+
+PURPOSE
+=======
+
+"fwding" is a tool which attempts to measure the forwarding delay incurred by 
+packets passing through a device. It takes a pcap file as input and outputs CSV
+formatted text detailing the arrival and departure frame numbers and timestamps,
+plus the time delta between arrival and departure.
+
+The pcacp file must be in the original tcpdump format (i.e. not pcapng) and must
+contain a capture of both sides of the forwarding device. In other words it must
+contain a copy of each frame entering and leaving the device under test.
+
+It uses the last 20 bytes of each frame to identify "before and after" pairs;
+test equipment by Spirent (and probably others) store a signature at the end of
+each frame, so this technique works very well. With "real" traffic your mileage
+will vary depending on how much entropy is in the last 20 bytes. A stream of
+compressed or encrypted data *should* give reasonable results, but any traffic
+which is repetetive in nature (OSPF hellos, LACPDUs, etc) will generate a lot of
+false matches. For best results, filter any non-test traffic from the pcap file
+before running it through fwding.
+
+Output timestamps are in seconds since Unix epoch. Time delta is measured in
+seconds.
+
+Please see http://networkingbodges.blogspot.com/ for more information on the
+theory behind this if you are interested.
+
+INSTALLATION
+============
+
+It should be possible to simply extract the source code, cd into the directory
+then run "make".
+
+USAGE
+=====
+
+There is only one parameter, and that is mandatory. You must specify your
+capture file (original pcap format) directly on the command line.
+
+Here's an example:
+
+lab@lab:~/fwding$ ./fwding infile.cap
+Arrival Frame Number, Arrival Time, Departure Frame Number, Departure Time, Forwarding Delay
+1, 1359455739.248146, 2, 1359455739.248161, 0.000015
+3, 1359455739.252175, 4, 1359455739.252225, 0.000050
+11, 1359455739.286297, 12, 1359455739.286311, 0.000014
+15, 1359455739.286660, 16, 1359455739.286798, 0.000138
+19, 1359455739.319249, 20, 1359455739.319300, 0.000051
+21, 1359455739.319606, 22, 1359455739.319742, 0.000136
+23, 1359455739.322433, 24, 1359455739.322570, 0.000137
+lab@lab:~/fwding$
+
+The output can be piped to other tools or redirected to file for consumption by
+your favourite spreadsheet or utility.
+
+Quick and dirty graphs can be obtained by running gnu plot against the output.
+For example to obtain a scatter chart of latency over time, open the gnuplot CLI
+and use:
+
+plot "fwding.csv" using 2:5 with points pt 2
+
+Alternatively to plot latency against packet number, use:
+
+plot "fwding.csv" using 1:5 with points pt 2
+
+CHANGE LOG
+==========
+
+v0.1a	First working release
+
+
